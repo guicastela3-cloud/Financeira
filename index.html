@@ -345,8 +345,29 @@ let cy=new Date().getFullYear(), cm=new Date().getMonth();
 let activePage='dash', activeTipo='gasto', filterAcct='', activeMovTipo='compra';
 let chartCat,chartAnual,chartInv;
 
-function load(){return JSON.parse(localStorage.getItem('findata3')||'{"txs":[],"budgets":{},"metas":[],"investimentos":[]}');}
-function save(d){localStorage.setItem('findata3',JSON.stringify(d));}
+function load(){
+  try{
+    const raw=localStorage.getItem('findata3');
+    if(!raw) return {txs:[],budgets:{},metas:[],investimentos:[]};
+    const d=JSON.parse(raw);
+    if(!d.txs) d.txs=[];
+    if(!d.budgets) d.budgets={};
+    if(!d.metas) d.metas=[];
+    if(!d.investimentos) d.investimentos=[];
+    return d;
+  }catch(e){
+    console.warn('Erro ao carregar dados:',e);
+    return {txs:[],budgets:{},metas:[],investimentos:[]};
+  }
+}
+function save(d){
+  try{
+    localStorage.setItem('findata3',JSON.stringify(d));
+  }catch(e){
+    alert('Erro ao guardar dados. O armazenamento pode estar cheio.');
+    console.error('Save error:',e);
+  }
+}
 
 function toggleInvAtual(tipo){
   const wrap=document.getElementById('i-atual-wrap');
@@ -356,7 +377,8 @@ function toggleInvAtual(tipo){
 }
 
 function seedData(){
-  const d=load(); if(d.txs.length) return;
+  if(localStorage.getItem('findata3_seeded')) return;
+  const d=load();
   const y=cy,m=cm;
   const dt=(day,mo=0)=>{const dd=new Date(y,m+mo,day);return dd.toISOString().split('T')[0];};
   d.txs=[
